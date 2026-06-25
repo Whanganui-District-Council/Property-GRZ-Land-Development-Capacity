@@ -46,7 +46,7 @@ FROM (
     SELECT prop_no
     FROM property.property_eplan_zones_multiples
     WHERE layer = 'grz_general_residential_zone'
-      AND overlap < 40
+      AND overlap < (SELECT value_numeric FROM property.get_rule_record('pct_multi_zone_dominance'))
 
     UNION ALL
 
@@ -58,9 +58,9 @@ FROM (
             SELECT 1 
             FROM property.property_eplan_overlays o 
             WHERE o.prop_no = p.prop_no 
-              AND o.layer = 'north_west_structure_plan_overlay'
-        ) THEN 800
-        ELSE 400
+              AND o.layer = (SELECT value_text FROM property.get_rule_record('eplan_overlay_layer'))
+        ) THEN (SELECT value_numeric FROM property.get_rule_record('min_lot_size_overlay'))
+        ELSE (SELECT value_numeric FROM property.get_rule_record('min_lot_size_standard'))
     END
 
     UNION ALL
@@ -103,7 +103,9 @@ FROM (
 	-- known exclusions
 	SELECT prop_no
 	FROM property.property
-	WHERE prop_no IN (8075,8104,9692,33718,80750,2059,428,676,1394)
+	--WHERE prop_no IN (8075,8104,9692,33718,80750,2059,428,676,1394,46750)
+	--WHERE prop_no = ANY(string_to_array(property.get_rule_record('vacant_prop_no_exclusions')::int[])
+	WHERE prop_no = ANY(string_to_array((SELECT value_text FROM property.get_rule_record('vacant_prop_no_exclusions')), ',')::int[])
 
 ) ex
 )
@@ -152,10 +154,10 @@ SELECT
 FROM dor
 JOIN property.property p ON p.prop_no = dor.prop_no
 CROSS JOIN LATERAL ST_MaximumInscribedCircle(dor.geom) AS mic
-WHERE mic.radius >= 7
+WHERE mic.radius >= (SELECT value_numeric FROM property.get_rule_record('min_mic_radius'))
 AND (
-    ST_Area(p.geom) - ST_Area(dor.geom) + (PI() * (7 ^ 2))
-	) > 30
+    ST_Area(p.geom) - ST_Area(dor.geom) + (PI() * ((SELECT value_numeric FROM property.get_rule_record('min_mic_radius')) ^ 2))
+	) > (SELECT value_numeric FROM property.get_rule_record('min_lot_open_space'))
 
 
 

@@ -64,9 +64,9 @@ potential AS (
                 SELECT 1 
                 FROM property.property_eplan_overlays o 
                 WHERE o.prop_no = p.prop_no 
-                  AND o.layer = 'north_west_structure_plan_overlay'
-            ) THEN FLOOR(b.developable_area / 800)
-            ELSE FLOOR(b.developable_area / 400)
+                  AND o.layer = (SELECT value_text FROM property.get_rule_record('eplan_overlay_layer'))
+            ) THEN FLOOR(b.developable_area / (SELECT value_numeric FROM property.get_rule_record('min_lot_size_overlay')))
+            ELSE FLOOR(b.developable_area / (SELECT value_numeric FROM property.get_rule_record('min_lot_size_standard')))
         END AS total_potential_lots,
         ROUND(ST_Area(p.geom)::numeric, 3) AS total_area_calc,
 		(SELECT total_road_frontage FROM property.property_grz_ldcap_viability_overlay_analysis qs WHERE p.prop_no = qs.prop_no) AS total_road_frontage,
@@ -90,8 +90,8 @@ p.potential_land_development_type,
 CASE
 	 WHEN p.total_potential_lots = 1 THEN 0
 	 WHEN p.total_potential_lots BETWEEN 2 AND 6 THEN total_potential_lots - 1
-	 WHEN p.total_potential_lots >= 7 AND p.total_road_frontage >= 10 THEN FLOOR(total_potential_lots-1 * 0.7)
-	 WHEN p.total_potential_lots >= 7 AND p.total_road_frontage < 10 THEN 6 -- fallback when access is not wide enough
+	 WHEN p.total_potential_lots >= 7 AND p.total_road_frontage >= (SELECT value_numeric FROM property.get_rule_record('min_frontage_large_scale')) THEN FLOOR(total_potential_lots-1 * ((SELECT value_numeric FROM property.get_rule_record('pct_large_scale_efficiency'))/100))
+	 WHEN p.total_potential_lots >= 7 AND p.total_road_frontage < (SELECT value_numeric FROM property.get_rule_record('min_frontage_large_scale')) THEN 6 -- fallback when access is not wide enough
 	 ELSE 0
 END AS phu_yield,
 p.total_area_calc / 10000 AS land_area_ha,
@@ -101,9 +101,9 @@ p.geom
 FROM potential p
 WHERE 
 CASE
-    WHEN p.total_potential_lots >= 7 AND p.total_road_frontage >= 10 THEN p.total_road_frontage >= 10
-	WHEN p.total_potential_lots >= 7 AND p.total_road_frontage < 10 THEN p.total_road_frontage >= 3.6 -- fallback when access is not wide enough
-    ELSE p.total_road_frontage >= 3.6
+    WHEN p.total_potential_lots >= 7 AND p.total_road_frontage >= (SELECT value_numeric FROM property.get_rule_record('min_frontage_large_scale')) THEN p.total_road_frontage >= (SELECT value_numeric FROM property.get_rule_record('min_frontage_large_scale'))
+	WHEN p.total_potential_lots >= 7 AND p.total_road_frontage < (SELECT value_numeric FROM property.get_rule_record('min_frontage_large_scale')) THEN p.total_road_frontage >= (SELECT value_numeric FROM property.get_rule_record('min_frontage_general')) -- fallback when access is not wide enough
+    ELSE p.total_road_frontage >= (SELECT value_numeric FROM property.get_rule_record('min_frontage_general'))
 END
 AND p.total_potential_lots > 1
 

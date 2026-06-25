@@ -136,7 +136,7 @@ CROSS JOIN LATERAL general.calc_overlap_stats_record(
     p.geom,
     'property',
     'building_footprints_2025',
-    'ST_Area(geom) >= 60 AND status IS DISTINCT FROM ''Deleted'''
+    'ST_Area(geom) >= ' || (SELECT value_numeric FROM property.get_rule_record('min_building_area')) || ' AND status IS DISTINCT FROM ''Deleted'''
 ) bf
 
 -- Road frontage
@@ -151,7 +151,7 @@ CROSS JOIN LATERAL (
     SELECT COUNT(*) = 0 AS is_vacant
     FROM property.building_footprints_2025 b
     WHERE ST_Intersects(p.geom, ST_Transform(b.geom, 2193))
-      AND bf.overlap_area >= 60
+      AND bf.overlap_area >= (SELECT value_numeric FROM property.get_rule_record('min_building_area'))
 ) vac
 
 GROUP BY 

@@ -39,7 +39,7 @@ WITH excl AS (
     SELECT prop_no
     FROM property.property_eplan_zones_multiples
     WHERE layer = 'grz_general_residential_zone'
-      AND overlap < 40
+      AND overlap < (SELECT value_numeric FROM property.get_rule_record('pct_multi_zone_dominance'))
 
 	UNION ALL
 

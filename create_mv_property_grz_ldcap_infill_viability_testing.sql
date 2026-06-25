@@ -46,7 +46,7 @@ FROM (
     SELECT prop_no
     FROM property.property_eplan_zones_multiples
     WHERE layer = 'grz_general_residential_zone'
-      AND overlap < 40
+      AND overlap < (SELECT value_numeric FROM property.get_rule_record('pct_multi_zone_dominance'))
 
     UNION ALL
 
@@ -58,9 +58,9 @@ FROM (
             SELECT 1 
             FROM property.property_eplan_overlays o 
             WHERE o.prop_no = p.prop_no 
-              AND o.layer = 'north_west_structure_plan_overlay'
-        ) THEN 800
-        ELSE 400
+              AND o.layer = (SELECT value_text FROM property.get_rule_record('eplan_overlay_layer'))
+        ) THEN (SELECT value_numeric FROM property.get_rule_record('min_lot_size_overlay'))
+        ELSE (SELECT value_numeric FROM property.get_rule_record('min_lot_size_standard'))
     END
 
     UNION ALL
@@ -72,10 +72,10 @@ FROM (
       ON p.geom && b.geom
      AND ST_Intersects(p.geom, b.geom)
     WHERE b.status IS DISTINCT FROM 'Deleted'
-      AND ST_Area(b.geom) >= 60
+      AND ST_Area(b.geom) >= (SELECT value_numeric FROM property.get_rule_record('min_building_area'))
     GROUP BY p.prop_no, p.geom
     HAVING 
-        SUM(ST_Area(ST_Intersection(p.geom, b.geom))) / ST_Area(p.geom) >= 0.25
+        SUM(ST_Area(ST_Intersection(p.geom, b.geom))) / ST_Area(p.geom) >= (SELECT value_numeric FROM property.get_rule_record('max_building_coverage'))
 
     UNION ALL
 
@@ -116,14 +116,14 @@ FROM (
      AND ST_Intersects(p.geom, b.geom)
     WHERE 
         b.status IS DISTINCT FROM 'Deleted'
-        AND ST_Area(b.geom) >= 60
+        AND ST_Area(b.geom) >= (SELECT value_numeric FROM property.get_rule_record('min_building_area'))
     GROUP BY p.prop_no, p.geom
     HAVING 
         COUNT(*) > 1
         AND (
             SUM(ST_Area(ST_Intersection(p.geom, b.geom))) 
             / ST_Area(p.geom)
-        ) >= 0.25
+        ) >= (SELECT value_numeric FROM property.get_rule_record('max_building_coverage'))
 
     UNION ALL
 
@@ -143,7 +143,8 @@ FROM (
 	-- known exclusions (mainly property with multiple small footprints)
 	SELECT prop_no
 	FROM property.property
-	WHERE prop_no IN (8075,8104,9692,33718,80750,2059,428,676,1394)
+	--WHERE prop_no IN (8075,8104,9692,33718,80750,2059,428,676,1394)
+	WHERE prop_no = ANY(string_to_array((SELECT value_text FROM property.get_rule_record('infill_prop_no_exclusions')), ',')::int[])
 
 ) ex
 )
@@ -175,7 +176,7 @@ WHERE b.status IS DISTINCT FROM 'Deleted'
 , buidlings AS (
 SELECT prop_no, geom
 FROM buildings_clipped
-WHERE ST_Area(geom) >= 60
+WHERE ST_Area(geom) >= (SELECT value_numeric FROM property.get_rule_record('min_building_area'))
 )
 
 -- ---------------------------------
@@ -224,7 +225,7 @@ GROUP BY prop_no, property_segment_id
 
 , property_side_compliance AS (
 SELECT prop_no,
-       COUNT(*) FILTER (WHERE closest_dist >= 3.6) AS clean_access_sides_count
+       COUNT(*) FILTER (WHERE closest_dist >= (SELECT value_numeric FROM property.get_rule_record('min_side_access'))) AS clean_access_sides_count
 FROM property_side_distance
 GROUP BY prop_no
 )
@@ -260,7 +261,7 @@ LEFT JOIN property.property_grz_ldcap_viability_overlay_analysis oa ON dprf.prop
 SELECT dor.prop_no,
        CASE 
            WHEN ipb.geom IS NOT NULL 
-           THEN ST_Difference(dor.geom, ST_Buffer(ipb.geom, 3))
+           THEN ST_Difference(dor.geom, ST_Buffer(ipb.geom, (SELECT value_numeric FROM property.get_rule_record('min_building_distance'))))
            ELSE dor.geom
        END AS geom
 FROM dor
@@ -285,10 +286,10 @@ SELECT
 FROM dp
 JOIN property.property p ON p.prop_no = dp.prop_no
 CROSS JOIN LATERAL ST_MaximumInscribedCircle(dp.geom) AS mic
-WHERE mic.radius >= 7
+WHERE mic.radius >= (SELECT value_numeric FROM property.get_rule_record('min_mic_radius'))
 AND (
-    ST_Area(p.geom) - ST_Area(dp.geom) + (PI() * (7 ^ 2))
-	) > 60
+    ST_Area(p.geom) - ST_Area(dp.geom) + (PI() * ((SELECT value_numeric FROM property.get_rule_record('min_mic_radius')) ^ 2))
+	) > ((SELECT value_numeric FROM property.get_rule_record('min_lot_open_space')) * 2)
 AND (
 		dp.prop_no IN (
 	    SELECT prop_no 
@@ -316,7 +317,7 @@ AND (
             FROM property.property_grz_ldcap_building_quadrant_stats q
 			WHERE quadrant_is_front_facing
 			AND is_buildable_quadrant
-			AND frontage_length >= 15
+			AND frontage_length >= (SELECT value_numeric FROM property.get_rule_record('min_frontage_quadrant'))
 			)
 		)
 	)

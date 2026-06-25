@@ -32,7 +32,7 @@ GRANT SELECT ON TABLE property.property_grz_ldcap_overlay_analysis_config TO wdc
 
 
 
-INSERT INTO property.overlay_calc_config (
+INSERT INTO property.property_grz_ldcap_overlay_analysis_config (
     group_name,
     alias,
     schema_name,
