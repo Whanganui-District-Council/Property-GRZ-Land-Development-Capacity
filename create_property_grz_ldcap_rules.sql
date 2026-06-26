@@ -36,3 +36,40 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_property_grz_ldcap_rules_rule_name
     ON property.property_grz_ldcap_rules USING btree
     (rule_name COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+
+
+INSERT INTO property.property_grz_ldcap_rules
+(fid, rule_name, rule_group, value_numeric, value_text, value_bool, description, updated_at)
+VALUES
+(11, 'eplan_overlay_layer', 'density', NULL, 'north_west_structure_plan_overlay', NULL, 'ePlan overlay layer name used for Overlay minimum lot size', '2026-06-25 13:48:27.734'),
+
+(12, 'infill_prop_no_exclusions', 'exclude', NULL, '8075,8104,9692,33718,80750,2059,428,676,1394,98080,95410', NULL, 'Exclude these properties from the Infill pipeline', '2026-06-25 14:08:30.853'),
+
+(7, 'max_building_coverage', 'viability', 0.25, NULL, NULL, 'Max building coverage threshold', '2026-06-25 13:16:55.329'),
+
+(1, 'min_building_area', 'geometry', 60, NULL, NULL, 'Minimum building footprint area', '2026-06-25 13:16:55.329'),
+
+(15, 'min_building_distance', 'viability', 3, NULL, NULL, 'Minimum distance of building platform to existing building', '2026-06-25 14:14:50.202'),
+
+(5, 'min_frontage_general', 'access', 3.6, NULL, NULL, 'Minimum access width', '2026-06-25 13:16:55.329'),
+
+(6, 'min_frontage_large_scale', 'access', 10, NULL, NULL, 'Frontage required for large scale', '2026-06-25 13:16:55.329'),
+
+(8, 'min_frontage_quadrant', 'geometry', 15, NULL, NULL, 'Minimum frontage for quadrant viability', '2026-06-25 13:16:55.329'),
+
+(9, 'min_lot_open_space', 'density', 30, NULL, NULL, 'Minimum open space area', '2026-06-25 13:39:16.921'),
+
+(4, 'min_lot_size_overlay', 'density', 800, NULL, NULL, 'Overlay minimum lot size', '2026-06-25 13:16:55.329'),
+
+(3, 'min_lot_size_standard', 'density', 400, NULL, NULL, 'Standard minimum lot size', '2026-06-25 13:16:55.329'),
+
+(2, 'min_mic_radius', 'geometry', 7, NULL, NULL, 'Minimum radius for building platform', '2026-06-25 13:16:55.329'),
+
+(14, 'min_side_access', 'access', 3.6, NULL, NULL, 'Minimum side access width', '2026-06-25 14:12:48.329'),
+
+(16, 'pct_large_scale_efficiency', 'viability', 70, NULL, NULL, 'Percentage efficiency for Large Scale developments (to account for roading etc)', '2026-06-26 07:15:59.442'),
+
+(10, 'pct_multi_zone_dominance', 'viability', 40, NULL, NULL, 'Percentage dominance in multiple zoned properties', '2026-06-25 13:44:51.435'),
+
+(13, 'vacant_prop_no_exclusions', 'exclude', NULL, '8075,8104,9692,33718,80750,2059,428,676,1394,46750', NULL, 'Exclude these properties from the Vacant pipeline', '2026-06-25 14:10:23.265');
