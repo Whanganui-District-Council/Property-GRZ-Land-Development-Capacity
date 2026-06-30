@@ -62,10 +62,10 @@ potential AS (
         CASE 
             WHEN EXISTS (
                 SELECT 1 
-                FROM property.property_eplan_overlays o 
+                FROM property.property_grz_ldcap_overlays o 
                 WHERE o.prop_no = p.prop_no 
-                  AND o.layer = (SELECT value_text FROM property.get_rule_record('eplan_overlay_layer'))
-            ) THEN FLOOR(b.developable_area / (SELECT value_numeric FROM property.get_rule_record('min_lot_size_overlay')))
+                  --AND o.layer = (SELECT layer FROM property.property_grz_ldcap_overlays)
+            ) THEN FLOOR(b.developable_area / (SELECT min_lot_size_overlay FROM property.property_grz_ldcap_overlays ov WHERE p.prop_no = ov.prop_no))
             ELSE FLOOR(b.developable_area / (SELECT value_numeric FROM property.get_rule_record('min_lot_size_standard')))
         END AS total_potential_lots,
         ROUND(ST_Area(p.geom)::numeric, 3) AS total_area_calc,

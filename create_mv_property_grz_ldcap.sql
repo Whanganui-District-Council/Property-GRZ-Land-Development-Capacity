@@ -16,6 +16,7 @@ DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_infill_viable;
 DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_fully_developed_testing;
 DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_infill_viability_testing;
 DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_vacant_viability_testing;
+DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_overlays;
 DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_viability_overlay_analysis;
 DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_building_quadrant_summary;
 DROP MATERIALIZED VIEW IF EXISTS property.property_grz_ldcap_building_quadrant_stats;
@@ -25,6 +26,9 @@ CALL property.create_mv_property_grz_ldcap_building_quadrant_stats();
 CALL property.create_mv_property_grz_ldcap_building_quadrant_summary();
 
 CALL property.create_mv_property_grz_ldcap_viability_overlay_analysis();
+
+CALL property.create_mv_property_grz_ldcap_overlays();
+
 
 CALL property.create_mv_property_grz_ldcap_infill_viability_testing();
 CALL property.create_mv_property_grz_ldcap_vacant_viability_testing();
